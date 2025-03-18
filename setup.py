@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="jupyter-notebook-toc",
-    version="0.1.6",
+    version="0.2.2",
     author="Viktor Sjöberg",
     author_email="viktor@alfrida.se",
     description="A tool to generate table of contents for Jupyter notebooks",

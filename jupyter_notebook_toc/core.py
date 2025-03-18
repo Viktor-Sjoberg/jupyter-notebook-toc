@@ -8,6 +8,7 @@ import subprocess
 import sys
 import nbformat
 import os
+import json
 
 def _ensure_nbformat():
     """Ensure nbformat is installed, install it if not present."""
@@ -22,7 +23,7 @@ def _ensure_nbformat():
 # Import nbformat after ensuring it's installed
 nbformat = _ensure_nbformat()
 
-def _extract_headers(cell_content: str) -> List[Tuple[int, str]]:
+def _extract_headers(cell_content: str) -> List[Tuple[int, str, str]]:
     """
     Extract headers from markdown cell content.
     
@@ -30,7 +31,7 @@ def _extract_headers(cell_content: str) -> List[Tuple[int, str]]:
         cell_content: The content of a markdown cell
         
     Returns:
-        List of tuples containing (level, text) for each header
+        List of tuples containing (level, number, text) where number can be empty
     """
     headers = []
     lines = cell_content.split('\n')
@@ -40,35 +41,36 @@ def _extract_headers(cell_content: str) -> List[Tuple[int, str]]:
         match = re.match(r'^(#{1,3})\s+(.+)$', line)
         if match:
             level = len(match.group(1))
-            text = match.group(2).strip()
-            headers.append((level, text))
+            full_text = match.group(2).strip()
+            
+            # Try to extract number and text
+            number_match = re.match(r'^(\d+\.?\d*\.?\d*)\s+(.+)$', full_text)
+            if number_match:
+                number = number_match.group(1)
+                text = number_match.group(2).strip()
+            else:
+                number = ""
+                text = full_text
+            
+            headers.append((level, number, text))
     
     return headers
 
 
-def _generate_numbered_toc(headers: List[Tuple[int, str]]) -> str:
+def _generate_numbered_toc(headers: List[Tuple[int, str, str]]) -> str:
     """
-    Generate a numbered table of contents from headers with hyperlinks.
+    Generate a table of contents from headers, using only existing numbers.
     
     Args:
-        headers: List of (level, text) tuples
+        headers: List of (level, number, text) tuples
         
     Returns:
         Formatted table of contents as string with hyperlinks
     """
     toc_lines = ["# Table of Contents\n"]
-    current_numbers = [0, 0, 0]
     
-    for level, text in headers:
-        # Update numbering
-        current_numbers[level - 1] += 1
-        for i in range(level, 3):
-            current_numbers[i] = 0
-            
-        # Create number string (e.g., "1.2.3")
-        number = '.'.join(str(n) for n in current_numbers[:level])
-        
-        # Create anchor link from text
+    for level, number, text in headers:
+        # Create anchor link from text (without numbers)
         # Convert text to lowercase, replace spaces with hyphens, remove special characters
         anchor = text.lower()
         anchor = re.sub(r'[^a-z0-9\s-]', '', anchor)
@@ -76,8 +78,11 @@ def _generate_numbered_toc(headers: List[Tuple[int, str]]) -> str:
         
         # Add indentation based on level
         indent = '    ' * (level - 1)
-        # Create markdown link
-        toc_lines.append(f"{indent}{number}. [{text}](#{anchor})")
+        # Create markdown link, adding the number only if it exists
+        if number:
+            toc_lines.append(f"{indent}{number} [{text}](#{anchor})")
+        else:
+            toc_lines.append(f"{indent}[{text}](#{anchor})")
     
     return '\n'.join(toc_lines)
 
@@ -90,22 +95,38 @@ def generate_toc(notebook_path: str) -> str:
         notebook_path: Path to the Jupyter notebook file
         
     Returns:
-        Formatted table of contents as string
+        Formatted table of contents as string with hyperlinks
         
     Raises:
         FileNotFoundError: If the notebook file doesn't exist
-        nbformat.reader.NotJSONError: If the notebook is not valid JSON
     """
     # Read the notebook
     with open(notebook_path, 'r', encoding='utf-8') as f:
         notebook = nbformat.read(f, as_version=4)
+
+    headers = []
     
-    # Collect all headers from markdown cells
-    all_headers = []
+    # Collect headers from markdown cells
     for cell in notebook.cells:
-        if cell.cell_type == 'markdown':
-            headers = _extract_headers(cell.source)
-            all_headers.extend(headers)
-    
-    # Generate the table of contents
-    return _generate_numbered_toc(all_headers) 
+        if cell.cell_type == "markdown":
+            lines = cell.source.split('\n')
+            for line in lines:
+                if line.startswith('#'):
+                    # Remove the # symbols and leading/trailing whitespace
+                    header_text = line.lstrip('#').strip()
+                    # Count the header level for indentation
+                    level = len(line) - len(line.lstrip('#'))
+                    if level <= 3:  # Only include headers up to level 3
+                        headers.append((level, header_text))
+
+    # Generate TOC
+    toc_lines = ["# Table of Contents\n"]
+    for level, header_text in headers:
+        # Create indent based on header level
+        indent = '    ' * (level - 1)
+        # Create the anchor link
+        anchor = header_text.lower().replace(' ', '-').replace(':', '')
+        # Add the header with proper indentation
+        toc_lines.append(f"{indent}[{header_text}](#{anchor})")
+
+    return '\n'.join(toc_lines) 

@@ -1,6 +1,6 @@
 Metadata-Version: 2.2
 Name: jupyter-notebook-toc
-Version: 0.1.6
+Version: 0.2.2
 Summary: A tool to generate table of contents for Jupyter notebooks
 Home-page: https://github.com/Viktor-Sjoberg/jupyter-notebook-toc
 Author: Viktor Sjöberg
