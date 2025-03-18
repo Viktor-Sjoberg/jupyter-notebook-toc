@@ -1,2 +1,2 @@
 [console_scripts]
-jupyter-toc = jupyter_toc_generator.cli:main
+jupyter-toc = jupyter_notebook_toc.cli:main

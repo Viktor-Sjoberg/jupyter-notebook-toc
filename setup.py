@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="jupyter-notebook-toc",
-    version="0.1.0",
+    version="0.1.6",
     author="Viktor Sjöberg",
     author_email="viktor@alfrida.se",
     description="A tool to generate table of contents for Jupyter notebooks",
@@ -31,7 +31,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "jupyter-toc=jupyter_toc_generator.cli:main",
+            "jupyter-toc=jupyter_notebook_toc.cli:main",
         ],
     },
 ) 

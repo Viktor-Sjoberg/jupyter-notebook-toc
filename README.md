@@ -9,22 +9,26 @@ A Python library that automatically generates a table of contents for Jupyter no
 - Generates a formatted table of contents with proper indentation
 - Supports numbered sections
 - Easy to integrate into existing notebooks
+- Automatic notebook detection
+- Hyperlinks to sections
 
 ## Installation
 
 ```bash
-pip install jupyter-toc-generator
+pip install jupyter-notebook-toc
 ```
 
 ## Usage
 
 ```python
-from jupyter_toc_generator import generate_toc
+import jupyter_notebook_toc.core as toc_gen
 
-# Generate TOC from a notebook file
-toc = generate_toc("path/to/your/notebook.ipynb")
+# Generate TOC from the current notebook
+toc = toc_gen.generate_toc()
+print(toc)
 
-# Print the generated TOC
+# Or specify a notebook file
+toc = toc_gen.generate_toc("path/to/your/notebook.ipynb")
 print(toc)
 
 # Or save it to a file
@@ -32,20 +36,33 @@ with open("table_of_contents.md", "w") as f:
     f.write(toc)
 ```
 
+## Command Line Usage
+
+```bash
+# Generate TOC from current notebook
+jupyter-toc
+
+# Generate TOC from specific notebook
+jupyter-toc path/to/your/notebook.ipynb
+
+# Save TOC to file
+jupyter-toc -o table_of_contents.md
+```
+
 ## Example Output
 
 ```markdown
 # Table of Contents
 
-1. Introduction
-   1.1. Background
-   1.2. Purpose
-2. Methodology
-   2.1. Data Collection
-   2.2. Analysis
-3. Results
-   3.1. Findings
-   3.2. Discussion
+1. [Introduction](#introduction)
+    1.1. [Background](#background)
+    1.2. [Purpose](#purpose)
+2. [Methodology](#methodology)
+    2.1. [Data Collection](#data-collection)
+    2.2. [Analysis](#analysis)
+3. [Results](#results)
+    3.1. [Findings](#findings)
+    3.2. [Discussion](#discussion)
 ```
 
 ## Development
